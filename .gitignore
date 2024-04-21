@@ -1,0 +1,11 @@
+
+data/
+*.pdf
+*.Proj.user/
+images/
+
+/.quarto/
+.DS_Store
+.Rproj.user/
+*.yml
+deliverable/Presentation_files/

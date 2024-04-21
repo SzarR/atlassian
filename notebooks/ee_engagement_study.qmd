@@ -1,0 +1,510 @@
+---
+title: "Employee Engagement at Atlassian"
+---
+
+# Overview
+
+The purpose of this analysis is to drill down into the data to take a look at rumors about low engagement scores across certain teams. In particular, leaders are looking for two outcomes from this study:
+
+-   What drives employee engagement?
+
+-   The impact employee engagement has on job performance.
+
+# Set Project Options
+
+My R packages for a typical data workflow:
+
+```{r global_options, message=FALSE}
+
+options(scipen = 999, digits = 2) # For scientific printing
+
+library(readr)
+library(dplyr)
+library(skimr)
+library(ggplot2)
+
+# For ML
+library(tidymodels)
+library(vip)
+
+# For corr visualizations
+library(corrplot)
+```
+
+# Data Ingestion
+
+In this instance we were provided a static CSV file from the web:
+
+```{r data_ingestion, message=FALSE}
+
+df_raw <- 
+  read_csv(
+    '/Users/robs/r-lang/atlassian/data/People Insights Business Case - Data.csv'
+    )
+```
+
+A total of 1,000 cases and 21 features should be plenty to glean insights from. Column titles are:
+
+```{r headers, message=FALSE}
+
+df_raw %>% 
+  names()
+```
+
+# Data Missingness
+
+The first step I take in an analysis is to thoroughly inspect the quality of the data. The quality and extent of the data will ultimately decide the types of analyses and models I can build. So our first step is to check the distribution of the various features we will be using to answer our business questions with.
+
+As I already have some ideas of the types of models I'd potentially like to build such as a linear regression, perhaps, we'd first need to make sure the data is at least remotely normally distributed and we have a pretty decent distribution of data across the range of the entire distribution (heteroscedasticity).
+
+```{r eda, message=FALSE}
+
+skim(df_raw)
+```
+
+The `n_missing` field indicates there is no missing data in this dataset.
+
+# Feature Engineering
+
+Inspecting the columns of the data, there are several modifications and new features I'd like to make from the current columns provided in the dataset. This will certainly help us in the analysis stage of the data.
+
+## Time Zones
+
+Taking a look at the `emp_time_zone` and `manager_timezone` variables, I can see that we have the abbreviations for the various time zones in the world. However, I'd like to convert this into a continuous metric by using Zulu time to calculate the difference in hours between the various time zones. This should provide me with a way of perhaps running a correlation where I can see the difference in time zone hours to another key metric. The thought process here would be that the bigger the time gap between employee and manager, the less managing a manager can do for that particular employee.
+
+```{r time_zone_calc, message=FALSE}
+
+df_raw <-
+df_raw %>% 
+  mutate(emp_utc_time = case_when(
+    emp_time_zone == 'ACST' ~ 9.5,
+    emp_time_zone == 'AEST' ~ 10,
+    emp_time_zone == 'AWST' ~ 8,
+    emp_time_zone == 'CST' ~ -6,
+    emp_time_zone == 'EST' ~ -5,
+    emp_time_zone == 'IST' ~ 1,
+    emp_time_zone == 'MSK' ~ 3,
+    emp_time_zone == 'PST' ~ -8,
+    TRUE ~ NA_integer_
+  )) %>% 
+    mutate(mgr_utc_time = case_when(
+    manager_timezone == 'ACST' ~ 9.5,
+    manager_timezone == 'AEST' ~ 10,
+    manager_timezone == 'AWST' ~ 8,
+    manager_timezone == 'CST' ~ -6,
+    manager_timezone == 'EST' ~ -5,
+    manager_timezone == 'IST' ~ 1,
+    manager_timezone == 'MSK' ~ 3,
+    manager_timezone == 'PST' ~ -8,
+    TRUE ~ NA_integer_
+  )) %>% 
+  mutate(time_zone_diff = emp_utc_time - mgr_utc_time)
+```
+
+And a quick quality control check:
+
+```{r preview_time_zone_diff, message=FALSE}
+
+df_raw %>% 
+  select(emp_time_zone, 
+         emp_utc_time, 
+         manager_timezone, 
+         mgr_utc_time, 
+         time_zone_diff) %>% 
+  head()
+```
+
+We can typically ascertain the quality of our new feature by running a quick correlation to determine how well we are hitting the mark:
+
+```{r cor_engagement_time_zone, message=FALSE}
+
+cor.test(df_raw$emp_engagement,
+         df_raw$time_zone_diff)
+```
+
+A correlation of .17 with a *p-value* \< .000 is certainly a significant finding. The positive direction indicates that the larger the amount of hours between a manager and an employee, the more positive the engagement score. Could this be an indirect indication of employees not enjoying to be micromanaged? The hypothesis would be that the larger the discrepancy between the time zones, the less a manager has to manage his or her employee. I believe there is something here for us to lean into here from a storytelling perspective.
+
+## Numeric Performance Ratings
+
+As job performance makes up one important aspect of this study, we'd like to ensure we have this feature in nominal and numeric format. I elected to dichotomize this variable into either a 0 or 1, to indicate if somebody meets, or does not meet, the job performance standards at Atlassian. This decision furthermore aligns with the `previous_performance_rating`, which is a dichotomous categorical variable with the same levels of distinction.
+
+```{r perf_rating_engineering, message=FALSE}
+
+df_raw <-
+df_raw %>%
+  mutate(
+    current_perf_score = 
+      case_when(current_performance_rating == 'Did not meet' ~ 0,
+                current_performance_rating == 'Exceeds' ~ 1,
+                current_performance_rating == 'Fully Meets' ~ 1,
+                current_performance_rating == 'PIP' ~ 0,
+                TRUE ~ NA_integer_)) %>% 
+    mutate(
+    previous_perf_score = 
+      case_when(previous_performance_rating == 'Did not meet' ~ 0,
+                previous_performance_rating == 'Fully Meets' ~ 1,
+                TRUE ~ NA_integer_)) 
+```
+
+The resulting correlation between these two values is a 1, which indicates that both variables are essentially the same.
+
+## Engagement Favorability Index
+
+Engagement scores seem to be on a continuous scale of some sort. I am interested in knowing the percent of favorability between positive and negative employee engagement. This requires some engineering to accomplish:
+
+```{r engagement_index, message=FALSE}
+
+df_raw <-
+  df_raw %>% 
+  mutate(pct_engage = 
+           case_when(emp_engagement < 4 ~ 0,
+                     emp_engagement >= 4 ~ 1,
+                     TRUE ~ NA_integer_))
+```
+
+We now have a percent engagement score. This scale is not that informative on an individual record-by-record basis. The power of this scale comes into being when you start aggregating people into groups, whether those groups are by manager, by department, etc.
+
+# Data Exploration
+
+The next step in the workflow is to take a look at how the various features correlate with one another. This gives me a good understanding of the nature of the data, and the directionality of it as well. One of the best methods to quickly inspect your data is to run a correlation matrix, this will also provide us a useful graphic that can be presented to stakeholders once the analysis has been finalized.
+
+## Correlation Matrix
+
+```{r corr_matrix, message=FALSE}
+
+df_corr_matrix <-
+  df_raw %>% 
+  select(
+    emp_engagement,
+    salary,
+    emp_satisfaction,
+    tenure,
+    num_special_proj,
+    current_perf_score,
+    previous_perf_score, 
+    time_zone_diff
+  )
+
+corr_matrix <- cor(df_corr_matrix, use = 'everything')
+corr_test <- cor.mtest(df_corr_matrix, conf.level = .99) # For higher threshold
+
+corrplot(
+  corr_matrix,
+  method = 'number',
+  diag = FALSE,
+  type = 'upper',
+  col = '#0052cc',
+  p.mat = corr_test$p,
+  sig.level = .01,
+  pch.cex = 2,
+  pch.col = 'darkgray',
+  tl.col = 'black',
+  tl.srt = 45,
+  tl.cex = 1 / par("cex"),
+  cl.cex = 1 / par("cex")
+)
+```
+
+Employee engagement seems to be driven by nearly all the predictors in the dataset. A gray "X" in any particular cell indicates that the correlation is not statistically significant at *p* \< .01. We only have a couple non-significant correlations:
+
+-   number of special projects & salary
+
+-   employee satisfaction and tenure
+
+-   time zone difference and salary
+
+-   tenure and time zone difference
+
+What stands out the most is `tenure` and `num_special_proj`. Another interesting facet is the high correlation between `emp_engagement`, `emp_satisfaction` and `current_perf_score`. All three are highly positively correlated to one another. A classic case of multi-collinearity with these three variables, it would be difficult to be able to ascertain which causes what. This would rather provide us evidence of the bi-directionality of these various metrics. We'd have to be careful when building any linear regression model to include these three variables because of their high multicollinearity.
+
+## `num_special_projects`
+
+Let's take a quick look at the distribution of employee engagement and special project assignments:
+
+```{r}
+
+df_raw %>% 
+  ggplot(aes(emp_engagement, num_special_proj)) + 
+  geom_point(colour = '#0052cc', size = 3.5) +
+  xlab("Employee Engagement Score") +
+  ylab("Number of Special Projects") +
+  theme(text=element_text(size=14, family='sans'))
+```
+
+As I would have suspected, the sweet spot for projects and engagement seems to be around 1 - 15 projects. Nearly every single employee with \> 15 projects has a very low engagement score. Further attention needs to be paid to these overworked employees before they run the risk of complete burnout and potential mental health issues.
+
+## `emp_engagement`
+
+Since *Employee Engagement* is the criteria associated with our first business question, we need to also check the distribution of the data to ensure we capture a wide range of engagement across the employee population. Because if, for instance, everybody were to have a very high engagement score, we wouldn't be able to understand what drives **low** engagement. Even though a wide range of variance has already been proven out in the correlation matrix above, it's still important to take a look at the data.
+
+```{r, histogram_engagement, message=FALSE}
+
+ggplot(data = df_raw, aes(x = emp_engagement)) +
+        geom_histogram(fill = '#0052cc') +
+        theme(legend.position = 'none') +
+        xlab('Employee Engagement Score') + ylab('Count')
+```
+
+Thankfully, we have plenty of observations across all levels of engagement. I would assume this question would resemble a Likert-scale type rating system where a 1 would indicate low engagement, 3 would indicate neutral and a 5 would indicate a high engagement. As this data was provided by an external vendor, we have no way of ensuring our interpretation of this metric to be correct.
+
+This distribution provides us with useful data to ensure what separates the low engagement score employees from the high engagement score employees, since we have examples of both.
+
+## `current_performance_rating`
+
+Performance ratings are broken down into four categories:
+
+```{r count_perf_ratings, message=FALSE}
+
+df_raw %>% 
+  count(current_performance_rating, sort = TRUE) %>% 
+  mutate(pct_total = n / sum(n))
+```
+
+Approximately half of the distribution, or 500 employees were categorized as *PIP* or *Did Not Meet* expectations. Let's take a look at the previous performance rating:
+
+```{r count_previous_perf_rating, message=FALSE}
+
+df_raw %>% 
+  count(previous_performance_rating, sort = TRUE) %>% 
+  mutate(pct_total = n / sum(n))
+```
+
+We seem to have used different scales for performance ratings in the past, a dichotomous one, either pass or fail. The performance rating distributions do seem to line up more or less, however.
+
+```{r table_perf_ratings, message=FALSE}
+
+df_raw %>% 
+  count(previous_performance_rating,
+        current_performance_rating)
+```
+
+The results between `previous_performance_rating`and `current_performance_rating` seem to be identical. We can confirm with a random sample:
+
+```{r sample_perf_ratings, message=FALSE}
+
+df_raw %>% 
+  select(
+    previous_performance_rating,
+    current_performance_rating
+  ) %>% 
+  sample_n(10)
+```
+
+It seems the performance ratings are identical between these two time periods. it would therefore be problematic to include both these variables in a regression model.
+
+## Engagement/Satisfaction by Department
+
+One of my first reactions upon inspecting the data is the degree of differences that probably exists in employee engagement within the various departments at Atlassian. A quick way we can take a look at this is by calculating the average engagement and satisfaction score by department:
+
+```{r dept_by_satisfaction_engagement, message=FALSE}
+
+df_raw %>% 
+  group_by(department) %>% 
+  summarise(avg_satisfaction = mean(emp_satisfaction),
+            avg_engagement = mean(emp_engagement)) %>% 
+  arrange(desc(avg_engagement))
+```
+
+Engagement varies quite significantly across different departments, If we call a "3" neutral, we can recode and take a look at "Percent Favorability" by using anything \< 4 as a "low/neutral" categorization and anything \> 4 as a "favorable" categorization. The new engagement favorability index we stood up earlier does exactly that. We can now take a look at this percentage by `department`:
+
+```{r department_engagement_projects_size, message=FALSE}
+
+df_raw %>% 
+  group_by(department) %>% 
+  summarise(avg_engage = mean(pct_engage),
+            avg_projects = mean(num_special_proj),
+            dept_size = n()) %>% 
+  arrange(desc(avg_engage))
+```
+
+After re-positioning to this new metric, we see that average engagement levels for *Software Engineers* is nearly double than it is for *Admin Offices* or *Production*! Whatever *Software Engineering* is doing clearly needs to be applied to other departments at Atlassian! A quick visualization will help us tell the story here a bit better:
+
+```{r viz_department_engagement, message=FALSE}
+
+df_raw %>% 
+  group_by(department) %>% 
+  summarise(avg_engage = mean(pct_engage)) %>% 
+  ggplot(aes(x = department, y = avg_engage)) +
+  geom_bar(stat = 'identity', fill = '#0052CC') +
+  coord_flip() +
+  xlab('Department') +
+  ylab('Engagement Favorability Score')
+```
+
+### Analysis of Variance (ANOVA)
+
+A one-way ANOVA would give us information into whether the differences between any of the department combinations were significant or not. First we run a Levene's test to test the equality of the variances in our different distributions.
+
+```{r dept_anova, message=FALSE}
+
+library(car)
+
+car::leveneTest(emp_engagement ~ department,
+                data = df_raw)
+```
+
+Which comes back as significant, *p* \< .012 which is less than the .05 threshold.
+
+Secondly, we run our one way anova:
+
+```{r anova_test}
+
+aov_test <- oneway.test(emp_engagement ~ department,
+                        data = df_raw,
+                        var.equal = FALSE) # Levene's test above disproved this.
+
+print(aov_test)
+```
+
+This comes back as significant, at *p* \< .05. We do not have sufficient time to dive into contrasts or post-hoc tests to determine which departments differ significantly.
+
+## `salary`
+
+Remuneration is always a contentious issue when it comes to employee engagement and satisfaction. Let's take a look at how these variables look with our current dataset:
+
+```{r dept_salary_engagement_size, message=FALSE}
+
+df_raw %>% 
+  group_by(department) %>% 
+  summarise(avg_engagement = mean(emp_engagement),
+            avg_salary = mean(salary),
+            sample_size = n()) %>% 
+  arrange(desc(avg_engagement))
+```
+
+This table is revealing about *Software Engineering* and *Sales* departments. *Software engineers* have a lower average salary and higher engagement than *Sales*, who have a higher annual salary but lower job engagement scores. Just running a straight correlation on Salary and Engagement yields:
+
+```{r cor_salary_engagement, message=FALSE}
+
+cor(df_raw$salary, 
+    df_raw$emp_engagement)
+```
+
+Which is quite a small positive correlation. Testing for significance at this sample size will likely be meaningless, as the study is powerful enough to reject the null hypothesis even if the difference was much smaller. We interpret this effect as a trivial driver of employee engagement.
+
+I do think however that special projects is tied to engagement, so I want to see the average number of special projects in this view as well:
+
+```{r department_engagement_proj, message=FALSE}
+
+df_raw %>% 
+  group_by(department) %>% 
+  summarise(avg_engagement = mean(emp_engagement),
+            avg_proj = mean(num_special_proj)) %>% 
+  arrange(desc(avg_engagement))
+```
+
+The correlation seems to be negative, the more special projects assigned, the lower employee engagement is. A negative correlation should prove this relationship out:
+
+```{r cor_engagement_special_proj, message=FALSE}
+
+cor(df_raw$emp_engagement, 
+    df_raw$num_special_proj)
+```
+
+Wow, no, the opposite is true. More special projects results in higher employee engagement. Could this be a case of Simpson's Paradox? Let's dive into a more specific view here:
+
+```{r viz_engage_satisfaction, message=FALSE}
+
+df_raw %>%
+  ggplot(aes(emp_engagement, emp_satisfaction)) +
+  geom_point() +
+  geom_jitter()
+```
+
+Engagement and satisfaction are so connected to each other, there are literally no employees with low engagement and high satisfaction, or vice versa.
+
+# Q1. Drivers of Engagement
+
+After a quick analysis through what data we have to work with to answer our stakeholder questions, we can begin to understand how employee engagement fluctuates when positing it against other variables. After the EDA, we have a general idea of which variables make sense to build a regression model. For the machine learning aspects of this project, I rely on the *tidymodels* ecosystem.
+
+## Linear Regression Model Initialization
+
+```{r lin_reg_initialize}
+
+linear_mod <- linear_reg()
+```
+
+After we create our linear regression object, we create a "recipe" for all the predictors we'd like to feed into the model:
+
+```{r build_recipe}
+
+recipe_all <-
+  recipe(emp_engagement ~ manager_tenure +
+           salary +
+           tenure +
+           time_zone_diff +
+           num_special_proj,
+         data = df_raw)
+```
+
+Next, we build our model:
+
+```{r run_model}
+
+model_full <-
+  workflow() %>% 
+  add_model(linear_mod) %>% 
+  add_recipe(recipe_all)
+
+model_full_fit <- fit(model_full, data = df_raw)
+
+options(scipen = 999, digits = 2)
+tidy(model_full_fit)
+```
+
+Visualize:
+
+```{r viz_vip, message=FALSE}
+
+vip(model_full_fit,
+    aesthetics = list(fill = '#0052cc'))
+```
+
+# Q2: Engagement Impact on Job Performance
+
+In research conducted through the means of correlation analysis, we are unable to infer causality, or the directionality of the variables that we attempt to measure an association between. Instead, we must assume there is, to a certain degree, a bi-directional relationship between job performance and employee engagement.
+
+```{r cor_perf_rating_engagement, message=FALSE}
+
+cor.test(df_raw$current_perf_score,
+         df_raw$emp_engagement)
+```
+
+Given the large sample sizes, it's obvious we'll have a significant correlation, but more importantly, the magnitude of this correlation is simply astounding. A +.867 correlation is almost unheard of in the social sciences, which leads us to believe that these two variables are both measuring similar attributes with an employee. Because of this, it is difficult to tease apart which causes the other. Instead, we have reasonable evidence to assume that by increasing the drivers of employee engagement as seen in the correlation matrix, we would subsequently also increase job performance. A simple linear regression slope will tell us the extent of this change:
+
+```{r}
+
+df_perf_engage <-
+  df_raw %>% 
+    mutate(
+    performance = 
+      case_when(current_performance_rating == 'Did not meet' ~ 2,
+                current_performance_rating == 'Exceeds' ~ 4,
+                current_performance_rating == 'Fully Meets' ~ 3,
+                current_performance_rating == 'PIP' ~ 1,
+                TRUE ~ NA_integer_)) %>% 
+  select(performance,
+         emp_engagement)
+
+recipe_only_engagement <-
+  recipe(performance ~ emp_engagement,
+         data = df_perf_engage)
+
+model_perf <-
+  workflow() %>% 
+  add_model(linear_mod) %>% 
+  add_recipe(recipe_only_engagement)
+
+model_perf_fit <- fit(model_perf, data = df_perf_engage)
+
+tidy(model_perf_fit)
+```
+
+For every one unit increase in engagement, we'd expect to see job performance increase by .68.
+
+# Assumptions
+
+1.  `emp_engagement` is on a 1 to 5 scale where a 1 would indicate low, a 3 would indicate neutral, and a 5 would indicate a high response. I.e., a rating of "5" indicates that an employee demonstrates a high level of engagement.
+2.  In our example, we need to specify the "directionality" of the data. Are performance ratings issued before or after the engagement survey? In our example, we are hypothesizing that employee engagement leads to stronger job performance, but there could certainly be a bi-directional element to this relationship.
+3.  Outside the scope of this assignment, I believe there is a bug in the glossary that indicates `previous_performance_rating` is a categorical variable with four unique levels. The version of the dataset I have shows it only has two levels.
+4.  The correlation between `current_performance_rating` and `previous_performance_rating` is a perfect 1.0 (after transformation to numeric). This leads me to believe there is something erronous with one of these two variables.

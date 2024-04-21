@@ -1,0 +1,73 @@
+---
+title: "Employee Engagement Analysis"
+date: "January 11, 2024"
+format:
+  revealjs: 
+    theme: atlassian.scss
+    logo: /images/logo.png
+    footer: "Confidential."
+---
+
+## Background
+
+-   Address rumors of employee engagement scores trending negatively
+-   Better understand what drives engagement and its subsequent impact on performance
+-   Provided with a dataset with several key metrics, including survey results, performance ratings and employee information
+-   Goal: Provide leaders with actionable insights for course correcting low engagement scores
+    -   But also helping leaders understand the cost of low engagement to the organization
+
+## Purpose
+
+-   Why care about employee engagement?
+
+    -   Companies with highly engaged employees grew revenue 2.5x than those with low engaged employees
+
+    -   When employees connect their work to customer impact, they identify with the company's purpose which leads to organizational performance
+
+    -   Employees are Atlassian's greatest asset. By investing in them to do their best work, they will be more likely to exert themselves to be more successful
+
+    -   In a software company, the capability to deliver quality software quickly certainly serves as a strategic advantage
+
+## Procedure
+
+-   What did we do to the data in order for it to tell us what we wanted to know?
+
+-   First, we set up our variables in a way that makes more sense to analyze
+
+    -   Calculated the time difference between time zones to understand whether the gap is meaningful
+
+    -   Translated performance ratings into numeric values - to calculate averages
+
+    -   Developed a novel "Engagement Favorability Index" that collapsed a 5-point scale into Positive/Negative
+
+-   Exploratory Data Analysis: How do averages look across various groups?
+
+    -   Sometimes, simple averages can tell us so much!
+
+-   Correlation matrix to understand variable trends & relationships
+
+    -   What goes together, may give us clues to help us answer our research questions
+
+-   Linear regression to explain the drivers of employee engagement
+
+# Department by Engagement
+
+::: columns
+::: {.column width="50%"}
+-   A statistical test found significant differences in engagement between departments
+
+-   Software engineering has nearly double the favorability as compared to all other departments
+
+-   What is software engineering doing differently that makes such a dramatic difference?
+
+    -   Opportunity to leverage those findings and re-engineer the solutions to other segments of the company
+
+-   On the whole, engagement is \~ 25% favorable, which is poor
+
+-   Employee engagement has been found to drive key organizational outcomes like profitability and market share
+:::
+
+::: {.column width="50%"}
+![](images/000012.png)
+:::
+:::
