@@ -3,24 +3,25 @@ title: "Employee Engagement Analysis"
 date: "January 11, 2024"
 format:
   revealjs: 
-    theme: atlassian.scss
-    logo: /images/logo.png
-    footer: "Confidential."
+    slide-number: true
+    theme: [default, atlassian.scss]
+    logo: images/logo.png
+    footer: "Confidential"
+editor_options: 
+  chunk_output_type: console
 ---
 
-## Background
+## Background {.smaller style="color: black; text-transform:none"}
 
 -   Address rumors of employee engagement scores trending negatively
 -   Better understand what drives engagement and its subsequent impact on performance
 -   Provided with a dataset with several key metrics, including survey results, performance ratings and employee information
--   Goal: Provide leaders with actionable insights for course correcting low engagement scores
+-   **Goal: Provide leaders with actionable insights for course correcting low engagement scores**
     -   But also helping leaders understand the cost of low engagement to the organization
 
-## Purpose
+## Purpose {.smaller style="color: black"}
 
--   Why care about employee engagement?
-
-    -   Companies with highly engaged employees grew revenue 2.5x than those with low engaged employees
+-   Why care about employee engagement? Companies with highly engaged employees grew revenue 2.5x than those with low engaged employees
 
     -   When employees connect their work to customer impact, they identify with the company's purpose which leads to organizational performance
 
@@ -28,7 +29,7 @@ format:
 
     -   In a software company, the capability to deliver quality software quickly certainly serves as a strategic advantage
 
-## Procedure
+## Procedure {.smaller style="color: black"}
 
 -   What did we do to the data in order for it to tell us what we wanted to know?
 
@@ -50,10 +51,10 @@ format:
 
 -   Linear regression to explain the drivers of employee engagement
 
-# Department by Engagement
+## Department by Engagement {.smaller style="color: black; size=10"}
 
 ::: columns
-::: {.column width="50%"}
+::: {.column width="40%" style="font-size:20px;"}
 -   A statistical test found significant differences in engagement between departments
 
 -   Software engineering has nearly double the favorability as compared to all other departments
@@ -68,6 +69,124 @@ format:
 :::
 
 ::: {.column width="50%"}
-![](images/000012.png)
+![](images/bar_dept_engagement_score.png)
 :::
 :::
+
+## Special Projects and Engagement {.smaller style="color: black; size=10"}
+
+::: columns
+::: {.column width="40%" style="font-size:20px;"}
+-   We plotted engagement scores across special projects to better understand how special projects affects employee engagement
+
+-   The red box indicates employees who have a low engagement score and a high number of special projects
+
+-   These employees seem to be at risk for being overworked and subsequent burnout
+
+-   It's not all bad news, though, highly engaged employees with special projects \< 10 are quite numerous
+:::
+
+::: {.column width="50%"}
+![](images/scat_projects_engagement_score.png)
+:::
+:::
+
+## Correlation Analysis {.smaller style="color: black; size=10"}
+
+::: columns
+::: {.column width="40%" style="font-size:20px;"}
+-   **Satisfaction, engagement** and **performance** are nearly perfectly correlated
+
+    -   All these metrics are critical to unlocking organizational performance
+
+-   Nearly all variables have positive relationships with job performance and employee engagement, except for salary and tenure
+
+-   Engagement is significantly correlated with **special projects, tenure, salary and time zone difference**
+
+-   Correlation does not imply causation, which metrics are the driver?
+
+-   Research studies reached concensus on determining that job engagement leads to job performance, which makes sense
+:::
+
+::: {.column width="50%"}
+![](images/corr_matrix_2.png)
+:::
+:::
+
+## Linear Regression {.smaller style="color: black; size=10"}
+
+::: columns
+::: {.column width="40%" style="font-size:20px;"}
+-   Regression serves as a useful feature to tease apart which predictors have more leverage on engagement
+
+-   The analysis found nearly all the features to be significant
+
+-   **Salary** has the highest weight for explaining employee engagement by a significant margin, followed by the **time zone difference, number of special projects and manager tenure**
+
+    -   Special projects should however be limited to \< 15 per 6 month period
+
+-   In essence, according to our very bare-bones model, everything seems to matter and drive impact
+
+-   The really interesting finding is **time zone difference**, which could lead to an organizational culture analysis
+
+-   Managers with higher tenure also seem to know and understand how to engage their workforce
+:::
+
+::: {.column width="50%"}
+![](images/vip.png)
+:::
+:::
+
+## Beyond the Data {.smaller style="color: black"}
+
+-   Better understand the culture of Atlassian
+
+    -   Do teams effectively collaborate and trust one another?
+
+    -   Does information flow freely through the organization?
+
+    -   Are employees mission-oriented?
+
+-   Deeper dive into how Atlassian hires, retains and manages their workforce
+
+-   Better understand the "psychometric" properties of the tools used to report out these metrics
+
+## Conclusions {style="color: black; font-size:25px"}
+
+-   Employee engagement, satisfaction and job performance are all heavily positively correlated with one another, to an almost inseperable degree
+
+-   A simple linear regression showed us that a one unit increase in our engagement score (scale of 1-5) would lead to a .7 increase in our performance rating scale (scale 1-4), which is a very high change meaning that engagement impacts performance significantly, at an almost 1 to 1 ratio
+
+-   A large time zone difference between employee and manager results in higher levels of employee engagement, one interpretation of this finding is a manager is less able to micro-manage, which hints at the broader organizational culture of the organization
+
+-   Managers with higher tenure also seem to increase employee engagement
+
+-   Employee engagement fluctuates significantly across different departments, more analyses need to be conducted to better understand how the successful departments engage employees
+
+-   To a certain degree, special projects help boost employee engagement, but anything more than 15 projects will have an adverse effect on an employee's engagement levels
+
+## Next Steps {.smaller style="color: black"}
+
+-   Meet with leaders in departments that have high employee engagement scores (Software Engineering, Sales), to better understand their approach (DevOps, Agile, Scrum)
+
+    -   Apply findings to other areas of the organization
+
+-   Immediately address employees with a significant number of projects (greater than 15) for potential burnout, keep projects at a maximum of 15 to maintain employee engagement
+
+-   Create focus groups with high tenured managers to better understand how they interact and engage with their employees, this work could potentially lead to a pilot study based on the information learned from these focus group sessions
+
+-   Meet with the external vendor to drill deeper into engagement into areas such as: career development, well-being, job security, autonomy, work-life balance to better understand which parts of employee engagement Atlassian is doing well/not so well
+
+-   Gather more data. Especially dimensions on Performance/Engagement
+
+## Study Assumptions {.smaller style="color: black"}
+
+-   The term "employee engagement" could mean a wide range of issues, for the purposes of this study we are assuming this is a composite metric across a wide variety of sub-topics
+
+    -   The engagement scale has a min/max of 1-5. We assume 1 = low engagement and 5 = high engagement
+
+-   Previous performance rating and current performance rating have identical distributions
+
+-   What do we mean by "job performance" or "engagement"?
+
+-   Are the surveys developed psychometrically valid?

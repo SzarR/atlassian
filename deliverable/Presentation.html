@@ -332,31 +332,30 @@
 
   <p class="date">2024-01-11</p>
 </section>
-<section id="background" class="slide level2">
+<section id="background" class="slide level2 smaller" style="color: black; text-transform:none">
 <h2>Background</h2>
 <ul>
 <li>Address rumors of employee engagement scores trending negatively</li>
 <li>Better understand what drives engagement and its subsequent impact on performance</li>
 <li>Provided with a dataset with several key metrics, including survey results, performance ratings and employee information</li>
-<li>Goal: Provide leaders with actionable insights for course correcting low engagement scores
+<li><strong>Goal: Provide leaders with actionable insights for course correcting low engagement scores</strong>
 <ul>
 <li>But also helping leaders understand the cost of low engagement to the organization</li>
 </ul></li>
 </ul>
 </section>
-<section id="purpose" class="slide level2">
+<section id="purpose" class="slide level2 smaller" style="color: black">
 <h2>Purpose</h2>
 <ul>
-<li><p>Why care about employee engagement?</p>
+<li><p>Why care about employee engagement? Companies with highly engaged employees grew revenue 2.5x than those with low engaged employees</p>
 <ul>
-<li><p>Companies with highly engaged employees grew revenue 2.5x than those with low engaged employees</p></li>
 <li><p>When employees connect their work to customer impact, they identify with the company’s purpose which leads to organizational performance</p></li>
 <li><p>Employees are Atlassian’s greatest asset. By investing in them to do their best work, they will be more likely to exert themselves to be more successful</p></li>
 <li><p>In a software company, the capability to deliver quality software quickly certainly serves as a strategic advantage</p></li>
 </ul></li>
 </ul>
 </section>
-<section id="procedure" class="slide level2">
+<section id="procedure" class="slide level2 smaller" style="color: black">
 <h2>Procedure</h2>
 <ul>
 <li><p>What did we do to the data in order for it to tell us what we wanted to know?</p></li>
@@ -377,10 +376,10 @@
 <li><p>Linear regression to explain the drivers of employee engagement</p></li>
 </ul>
 </section>
-<section id="department-by-engagement" class="title-slide slide level1 center">
-<h1>Department by Engagement</h1>
+<section id="department-by-engagement" class="slide level2 smaller" style="color: black; size=10">
+<h2>Department by Engagement</h2>
 <div class="columns">
-<div class="column" style="width:50%;">
+<div class="column" style="font-size:20px;">
 <ul>
 <li><p>A statistical test found significant differences in engagement between departments</p></li>
 <li><p>Software engineering has nearly double the favorability as compared to all other departments</p></li>
@@ -392,12 +391,115 @@
 <li><p>Employee engagement has been found to drive key organizational outcomes like profitability and market share</p></li>
 </ul>
 </div><div class="column" style="width:50%;">
-<p><img data-src="images/000012.png"></p>
+<p><img data-src="images/bar_dept_engagement_score.png"></p>
 </div>
 </div>
-<p><img src="/images/logo.png" class="slide-logo"></p>
-<div class="footer footer-default">
-<p>Confidential.</p>
+</section>
+<section id="special-projects-and-engagement" class="slide level2 smaller" style="color: black; size=10">
+<h2>Special Projects and Engagement</h2>
+<div class="columns">
+<div class="column" style="font-size:20px;">
+<ul>
+<li><p>We plotted engagement scores across special projects to better understand how special projects affects employee engagement</p></li>
+<li><p>The red box indicates employees who have a low engagement score and a high number of special projects</p></li>
+<li><p>These employees seem to be at risk for being overworked and subsequent burnout</p></li>
+<li><p>It’s not all bad news, though, highly engaged employees with special projects &lt; 10 are quite numerous</p></li>
+</ul>
+</div><div class="column" style="width:50%;">
+<p><img data-src="images/scat_projects_engagement_score.png"></p>
+</div>
+</div>
+</section>
+<section id="correlation-analysis" class="slide level2 smaller" style="color: black; size=10">
+<h2>Correlation Analysis</h2>
+<div class="columns">
+<div class="column" style="font-size:20px;">
+<ul>
+<li><p><strong>Satisfaction, engagement</strong> and <strong>performance</strong> are nearly perfectly correlated</p>
+<ul>
+<li>All these metrics are critical to unlocking organizational performance</li>
+</ul></li>
+<li><p>Nearly all variables have positive relationships with job performance and employee engagement, except for salary and tenure</p></li>
+<li><p>Engagement is significantly correlated with <strong>special projects, tenure, salary and time zone difference</strong></p></li>
+<li><p>Correlation does not imply causation, which metrics are the driver?</p></li>
+<li><p>Research studies reached concensus on determining that job engagement leads to job performance, which makes sense</p></li>
+</ul>
+</div><div class="column" style="width:50%;">
+<p><img data-src="images/corr_matrix_2.png"></p>
+</div>
+</div>
+</section>
+<section id="linear-regression" class="slide level2 smaller" style="color: black; size=10">
+<h2>Linear Regression</h2>
+<div class="columns">
+<div class="column" style="font-size:20px;">
+<ul>
+<li><p>Regression serves as a useful feature to tease apart which predictors have more leverage on engagement</p></li>
+<li><p>The analysis found nearly all the features to be significant</p></li>
+<li><p><strong>Salary</strong> has the highest weight for explaining employee engagement by a significant margin, followed by the <strong>time zone difference, number of special projects and manager tenure</strong></p>
+<ul>
+<li>Special projects should however be limited to &lt; 15 per 6 month period</li>
+</ul></li>
+<li><p>In essence, according to our very bare-bones model, everything seems to matter and drive impact</p></li>
+<li><p>The really interesting finding is <strong>time zone difference</strong>, which could lead to an organizational culture analysis</p></li>
+<li><p>Managers with higher tenure also seem to know and understand how to engage their workforce</p></li>
+</ul>
+</div><div class="column" style="width:50%;">
+<p><img data-src="images/vip.png"></p>
+</div>
+</div>
+</section>
+<section id="beyond-the-data" class="slide level2 smaller" style="color: black">
+<h2>Beyond the Data</h2>
+<ul>
+<li><p>Better understand the culture of Atlassian</p>
+<ul>
+<li><p>Do teams effectively collaborate and trust one another?</p></li>
+<li><p>Does information flow freely through the organization?</p></li>
+<li><p>Are employees mission-oriented?</p></li>
+</ul></li>
+<li><p>Deeper dive into how Atlassian hires, retains and manages their workforce</p></li>
+<li><p>Better understand the “psychometric” properties of the tools used to report out these metrics</p></li>
+</ul>
+</section>
+<section id="conclusions" class="slide level2" style="color: black; font-size:25px">
+<h2>Conclusions</h2>
+<ul>
+<li><p>Employee engagement, satisfaction and job performance are all heavily positively correlated with one another, to an almost inseperable degree</p></li>
+<li><p>A simple linear regression showed us that a one unit increase in our engagement score (scale of 1-5) would lead to a .7 increase in our performance rating scale (scale 1-4), which is a very high change meaning that engagement impacts performance significantly, at an almost 1 to 1 ratio</p></li>
+<li><p>A large time zone difference between employee and manager results in higher levels of employee engagement, one interpretation of this finding is a manager is less able to micro-manage, which hints at the broader organizational culture of the organization</p></li>
+<li><p>Managers with higher tenure also seem to increase employee engagement</p></li>
+<li><p>Employee engagement fluctuates significantly across different departments, more analyses need to be conducted to better understand how the successful departments engage employees</p></li>
+<li><p>To a certain degree, special projects help boost employee engagement, but anything more than 15 projects will have an adverse effect on an employee’s engagement levels</p></li>
+</ul>
+</section>
+<section id="next-steps" class="slide level2 smaller" style="color: black">
+<h2>Next Steps</h2>
+<ul>
+<li><p>Meet with leaders in departments that have high employee engagement scores (Software Engineering, Sales), to better understand their approach (DevOps, Agile, Scrum)</p>
+<ul>
+<li>Apply findings to other areas of the organization</li>
+</ul></li>
+<li><p>Immediately address employees with a significant number of projects (greater than 15) for potential burnout, keep projects at a maximum of 15 to maintain employee engagement</p></li>
+<li><p>Create focus groups with high tenured managers to better understand how they interact and engage with their employees, this work could potentially lead to a pilot study based on the information learned from these focus group sessions</p></li>
+<li><p>Meet with the external vendor to drill deeper into engagement into areas such as: career development, well-being, job security, autonomy, work-life balance to better understand which parts of employee engagement Atlassian is doing well/not so well</p></li>
+<li><p>Gather more data. Especially dimensions on Performance/Engagement</p></li>
+</ul>
+</section>
+<section id="study-assumptions" class="slide level2 smaller" style="color: black">
+<h2>Study Assumptions</h2>
+<ul>
+<li><p>The term “employee engagement” could mean a wide range of issues, for the purposes of this study we are assuming this is a composite metric across a wide variety of sub-topics</p>
+<ul>
+<li>The engagement scale has a min/max of 1-5. We assume 1 = low engagement and 5 = high engagement</li>
+</ul></li>
+<li><p>Previous performance rating and current performance rating have identical distributions</p></li>
+<li><p>What do we mean by “job performance” or “engagement”?</p></li>
+<li><p>Are the surveys developed psychometrically valid?</p></li>
+</ul>
+
+<img src="images/logo.png" class="slide-logo r-stretch"><div class="footer footer-default">
+<p>Confidential</p>
 </div>
 </section>
     </div>
@@ -452,7 +554,7 @@
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
