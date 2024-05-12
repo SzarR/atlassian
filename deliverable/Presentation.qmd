@@ -1,5 +1,9 @@
 ---
 title: "Employee Engagement Analysis"
+title-slide-attributes:
+  data-background-image: images/title_slide.png
+  data-background-position: left
+  data-background-opacity: "0.5"
 date: "January 11, 2024"
 format:
   revealjs: 
